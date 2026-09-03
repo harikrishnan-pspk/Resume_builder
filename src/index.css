@@ -1,0 +1,153 @@
+/* Add Google Fonts imports for the various resume template typography options */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Inter:wght@100..900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* Font mapping utilities */
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-playfair { font-family: 'Playfair Display', serif; }
+.font-outfit { font-family: 'Outfit', sans-serif; }
+.font-fira { font-family: 'Fira Code', monospace; }
+.font-merriweather { font-family: 'Merriweather', serif; }
+.font-roboto { font-family: 'Roboto', sans-serif; }
+.font-poppins { font-family: 'Poppins', sans-serif; }
+
+/* Custom print media styles for vector-perfect, ATS-friendly outputs */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  
+  html, body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  
+  /* Hide all non-resume UI: sidebar, navbar, editor, buttons */
+  .no-print,
+  .no-print *,
+  aside,
+  nav,
+  header,
+  footer,
+  #resume-scroll-wrapper > *:not(#resume-preview-container) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* The right preview panel: reset to block layout */
+  #resume-right-panel {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: auto !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Scrollable wrapper: no padding, no flex centering */
+  #resume-scroll-wrapper {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* The preview card: remove border, shadow, rounding */
+  #resume-preview-container {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: unset !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* The actual resume document */
+  #resume-document {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    break-inside: auto !important;
+  }
+
+  /* Page break helpers */
+  .print-page-break {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  /* Avoid breaking sections across pages */
+  .break-inside-avoid,
+  .section-block,
+  .entry-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* Page break rules for PDF generation & document pagination */
+.break-inside-avoid,
+.section-block,
+.entry-block {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+
+
+/* Custom scrollbars for a premium SaaS application layout */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.45);
+}
+
+/* Glassmorphism styling helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom micro-interactions and transitions */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
