@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useResumeStore } from '../store/useResumeStore';
-import { Sun, Moon, Cpu, Layout, FileText, Check, Settings, X } from 'lucide-react';
+import { Sun, Moon, Cpu, FileText, Check, Settings, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();

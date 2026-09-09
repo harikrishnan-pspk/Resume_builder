@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../store/useResumeStore';
 import { analyzeResume, getKeywordSuggestionsForRole } from '../utils/atsScorer';
@@ -8,14 +8,13 @@ import { TemplateRenderer, TEMPLATES_LIST } from '../templates/Templates';
 import confetti from 'canvas-confetti';
 import { 
   User, FileText, GraduationCap, Cpu, Briefcase, Folder, Award, Languages, 
-  Heart, Users, Settings, Eye, Download, Sparkles, AlertCircle, Plus, 
-  Trash2, ArrowLeft, ArrowRight, Check, Palette, Moon, Sun, Layout, 
-  ChevronDown, HelpCircle, CheckCircle2, RefreshCw, Star, Info, Play
+  Heart, Users, Eye, Download, Sparkles, AlertCircle, Plus, 
+  Trash2, ArrowLeft, ArrowRight, Check, Palette, 
+  CheckCircle2, RefreshCw, Info
 } from 'lucide-react';
 
 export const Builder: React.FC = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Zustand Store hooks
   const {
@@ -25,7 +24,6 @@ export const Builder: React.FC = () => {
     activeStep,
     apiKey,
     apiProvider,
-    isDarkMode,
     setActiveStep,
     setTemplateId,
     updateThemeSettings,
@@ -156,15 +154,16 @@ export const Builder: React.FC = () => {
 
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingDOCX, setIsExportingDOCX] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  // Trigger downloads
+  // Trigger downloads with complete safety guards
   const handleDownloadPDF = async () => {
     if (isExportingPDF) return;
     setIsExportingPDF(true);
     try {
       const rawName = resumeData.personalInfo.fullName ? resumeData.personalInfo.fullName.trim() : '';
       const filename = rawName ? `${rawName.replace(/\s+/g, '_')}_Resume` : 'Resume';
-      console.log('Initiating PDF download for:', filename);
+      console.log('Initiating safe PDF download for:', filename);
       
       const success = await exportToPDF('resume-document', filename, themeSettings.pageSize);
       
@@ -172,14 +171,27 @@ export const Builder: React.FC = () => {
         console.log('Resume PDF downloaded successfully.');
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       } else {
-        console.error('PDF export failed - check console for details');
-        alert('Failed to generate PDF. Please try again or check browser console for errors.');
+        console.error('PDF export failed');
+        alert('Failed to generate PDF. Please check that all sections are valid.');
       }
     } catch (error) {
       console.error('PDF Download Error:', error);
-      alert('An error occurred while generating the PDF. Please check the console for more details.');
+      alert('An error occurred while generating the PDF. Please try again.');
     } finally {
       setIsExportingPDF(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+    try {
+      printResume();
+    } catch (error) {
+      console.error('Print Error:', error);
+      alert('Failed to launch print dialog.');
+    } finally {
+      setTimeout(() => setIsPrinting(false), 800);
     }
   };
 
@@ -1657,10 +1669,17 @@ export const Builder: React.FC = () => {
               )}
             </button>
             <button
-              onClick={printResume}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth"
+              disabled={isPrinting}
+              onClick={handlePrint}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth disabled:opacity-60"
             >
-              Print Vector
+              {isPrinting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Preparing...
+                </>
+              ) : (
+                'Print Vector'
+              )}
             </button>
             <button
               onClick={handleDownloadTXT}

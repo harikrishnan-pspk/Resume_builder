@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../store/useResumeStore';
 import { 
-  FileText, Sparkles, CheckCircle2, Award, Globe, Shield, Zap, 
+  Sparkles, CheckCircle2, Award, Shield, Zap, 
   ArrowRight, Star, ChevronDown, Monitor, Share2, HelpCircle 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +12,6 @@ export const Landing: React.FC = () => {
   const navigate = useNavigate();
   const { createNewResume } = useResumeStore();
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
-  const [selectedDemoTemplate, setSelectedDemoTemplate] = useState('modern-minimal');
 
   const handleStartBuilding = () => {
     createNewResume();

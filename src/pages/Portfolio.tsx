@@ -5,7 +5,6 @@ import {
   ArrowLeft, Download, Code, Globe, Mail, Phone, MapPin, 
   Settings, Check 
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 // Presets for the generated portfolio website styling
 const THEMES = [

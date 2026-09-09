@@ -1,123 +1,200 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
-import { ResumeData } from '../types/resume';
+import { ResumeData, ThemeSettings } from '../types/resume';
 
-// 1. Export PDF using html2pdf.js with fallback to direct html2canvas + jsPDF
+// 1. High-Performance, Non-Freezing Asynchronous PDF Exporter
 export async function exportToPDF(elementId: string, filename: string, pageSize: 'A4' | 'Letter' = 'A4'): Promise<boolean> {
-  // Find element by requested ID, or fallback to standard resume element IDs
-  let element = document.getElementById(elementId) || document.getElementById('resume-document') || document.getElementById('resume-preview-container');
+  // Yield execution to allow React state / UI spinner to paint before heavy operations
+  await new Promise((resolve) => setTimeout(resolve, 60));
 
-  if (!element) {
-    console.error('PDF Export Error: Element not found with ID:', elementId);
+  const sourceElement = document.getElementById(elementId) || 
+    document.getElementById('resume-document') || 
+    document.getElementById('resume-preview-container');
+
+  if (!sourceElement) {
+    console.error('PDF Export Error: Resume element not found');
     return false;
   }
 
-  // Format & sanitize filename
+  // Format & sanitize filename safely
   const rawName = filename && filename.trim() ? filename.trim() : 'Resume';
-  const cleanName = rawName.replace(/[/\\?%*:|"<>]/g, '').replace(/\s+/g, '_');
+  const cleanName = rawName.replace(/[/\\?%*:|"<>]/g, '').replace(/\s+/g, '_') || 'Resume';
   const pdfFilename = cleanName.endsWith('.pdf') ? cleanName : `${cleanName}.pdf`;
 
-  console.log('Initiating PDF export for target element:', element.id || 'unnamed', '->', pdfFilename);
+  // Standard dimensions (in mm and px at 96 DPI standard A4 width ~794px)
+  const isLetter = pageSize.toLowerCase() === 'letter';
+  const pageWidthMm = isLetter ? 215.9 : 210;
+  const pageHeightMm = isLetter ? 279.4 : 297;
+  
+  // Clone element into an isolated, off-screen rendering sandbox to prevent dark mode bleed & UI lock
+  const cloneWrapper = document.createElement('div');
+  cloneWrapper.setAttribute('id', 'pdf-export-sandbox');
+  cloneWrapper.style.position = 'fixed';
+  cloneWrapper.style.left = '-99999px';
+  cloneWrapper.style.top = '0';
+  cloneWrapper.style.width = '794px';
+  cloneWrapper.style.minHeight = '1123px';
+  cloneWrapper.style.zIndex = '-9999';
+  cloneWrapper.style.background = '#ffffff';
+  cloneWrapper.style.color = '#111827';
+  cloneWrapper.style.margin = '0';
+  cloneWrapper.style.padding = '0';
+  cloneWrapper.style.boxSizing = 'border-box';
+  cloneWrapper.style.overflow = 'visible';
 
-  // Safely resolve html2pdf module function in ESM / CJS bundles
-  const html2pdfLib = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any)?.default;
+  // Clone source DOM tree
+  const clone = sourceElement.cloneNode(true) as HTMLElement;
+  clone.style.width = '794px';
+  clone.style.maxWidth = '794px';
+  clone.style.minHeight = '1123px';
+  clone.style.margin = '0';
+  clone.style.boxShadow = 'none';
+  clone.style.border = 'none';
+  clone.style.borderRadius = '0';
 
-  if (typeof html2pdfLib === 'function') {
-    try {
-      const options = {
-        margin: [14, 14, 14, 14] as [number, number, number, number], // 14mm top, left, bottom, right
-        filename: pdfFilename,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false, // Must be false so toDataURL does NOT throw SecurityError
-          logging: false,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: pageSize.toLowerCase() === 'letter' ? 'letter' : 'a4',
-          orientation: 'portrait' as const,
-        },
-        pagebreak: {
-          mode: ['avoid-all', 'css', 'legacy'],
-          before: '.print-page-break',
-          avoid: ['.break-inside-avoid', '.section-block', '.entry-block', 'tr', 'li', 'h1', 'h2', 'h3'],
-        },
-      };
+  // Strip application dark mode class if inherited
+  clone.classList.remove('dark');
+  cloneWrapper.appendChild(clone);
+  document.body.appendChild(cloneWrapper);
 
-      await html2pdfLib().set(options).from(element).save();
-      console.log('PDF exported successfully via html2pdf:', pdfFilename);
-      return true;
-    } catch (error) {
-      console.warn('html2pdf export encountered an error, falling back to direct jsPDF engine:', error);
-    }
-  }
-
-  // Direct jsPDF + html2canvas fallback engine with 14mm margins
-  return await exportToPDDFallback(element, pdfFilename, pageSize);
-}
-
-// Fallback PDF exporter using direct html2canvas + jsPDF with 14mm margins
-async function exportToPDDFallback(
-  element: HTMLElement,
-  pdfFilename: string,
-  pageSize: 'A4' | 'Letter' = 'A4'
-): Promise<boolean> {
   try {
-    const pageW = pageSize === 'Letter' ? 215.9 : 210;
-    const pageH = pageSize === 'Letter' ? 279.4 : 297;
-    const margin = 14; // 14mm margins
-    const contentW = pageW - margin * 2;
-    const contentH = pageH - margin * 2;
+    // 1. Ensure fonts are loaded
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
 
-    const canvas = await html2canvas(element, {
+    // 2. Wait for all images in clone to be decoded and loaded
+    const images = Array.from(clone.querySelectorAll('img'));
+    if (images.length > 0) {
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+          return new Promise<void>((res) => {
+            img.onload = () => res();
+            img.onerror = () => res();
+            setTimeout(res, 2000); // 2s safety timeout per image
+          });
+        })
+      );
+    }
+
+    // 3. Smart Multi-Page Break Adjustment:
+    // A4 page height at 794px width is ~1123px
+    const pagePxHeight = isLetter ? Math.round(794 * (279.4 / 215.9)) : 1123;
+    const totalHeight = clone.scrollHeight || clone.offsetHeight;
+
+    if (totalHeight > pagePxHeight) {
+      // Find boundary blocks (.section-block, .entry-block, h1, h2, h3) to prevent splitting text
+      const blocks = Array.from(clone.querySelectorAll('.section-block, .entry-block, h1, h2, h3, li, tr')) as HTMLElement[];
+      const cloneRect = clone.getBoundingClientRect();
+
+      let accumulatedOffset = 0;
+      let currentPage = 1;
+
+      for (const block of blocks) {
+        const blockRect = block.getBoundingClientRect();
+        const blockTopRelativeToClone = (blockRect.top - cloneRect.top) + accumulatedOffset;
+        const blockBottomRelativeToClone = blockTopRelativeToClone + blockRect.height;
+        const targetPageBoundary = currentPage * pagePxHeight;
+
+        // If the block crosses the page boundary and doesn't single-handedly exceed a whole page
+        if (blockTopRelativeToClone < targetPageBoundary && blockBottomRelativeToClone > targetPageBoundary && blockRect.height < (pagePxHeight * 0.8)) {
+          const pushDownAmount = targetPageBoundary - blockTopRelativeToClone;
+          if (pushDownAmount > 0 && pushDownAmount < pagePxHeight) {
+            const spacer = document.createElement('div');
+            spacer.style.height = `${pushDownAmount + 16}px`;
+            spacer.style.width = '100%';
+            spacer.style.display = 'block';
+            spacer.className = 'pdf-page-spacer';
+            block.parentNode?.insertBefore(spacer, block);
+            accumulatedOffset += pushDownAmount + 16;
+            currentPage++;
+          }
+        }
+      }
+    }
+
+    // Yield to allow DOM adjustments to settle
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    // 4. Capture clone via high-DPI canvas
+    const canvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
-      allowTaint: false, // Must be false to allow canvas.toDataURL() export
+      allowTaint: false,
       logging: false,
       backgroundColor: '#ffffff',
+      width: 794,
+      windowWidth: 794,
       scrollX: 0,
       scrollY: 0,
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.98);
-    const imgW = contentW;
-    const imgH = (canvas.height * contentW) / canvas.width;
-
+    // 5. Generate Multi-page PDF via jsPDF
     const pdf = new jsPDF({
       unit: 'mm',
-      format: pageSize === 'Letter' ? 'letter' : 'a4',
+      format: isLetter ? 'letter' : 'a4',
       orientation: 'portrait',
+      compress: true,
     });
 
-    if (imgH <= contentH) {
-      pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
-    } else {
-      let heightLeft = imgH;
-      let position = 0;
-      let pageCount = 0;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Total physical height in mm corresponding to canvas
+    const imgHeightMm = (canvasHeight * pageWidthMm) / canvasWidth;
+    let heightLeftMm = imgHeightMm;
+    let pageIndex = 0;
 
-      while (heightLeft > 0) {
-        if (pageCount > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, margin - position, imgW, imgH);
-        heightLeft -= contentH;
-        position += contentH;
-        pageCount++;
+    // Canvas slicing per A4 page to prevent distortion
+    const pageCanvasHeight = Math.round((pageHeightMm * canvasWidth) / pageWidthMm);
+
+    while (heightLeftMm > 0) {
+      if (pageIndex > 0) {
+        pdf.addPage();
       }
+
+      // Create a slice canvas for this specific page
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvasWidth;
+      pageCanvas.height = Math.min(pageCanvasHeight, canvasHeight - pageIndex * pageCanvasHeight);
+      
+      const ctx = pageCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          pageIndex * pageCanvasHeight,
+          canvasWidth,
+          pageCanvas.height,
+          0,
+          0,
+          canvasWidth,
+          pageCanvas.height
+        );
+
+        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.98);
+        const sliceHeightMm = (pageCanvas.height * pageWidthMm) / canvasWidth;
+        pdf.addImage(pageImgData, 'JPEG', 0, 0, pageWidthMm, sliceHeightMm);
+      }
+
+      heightLeftMm -= pageHeightMm;
+      pageIndex++;
     }
 
     pdf.save(pdfFilename);
-    console.log('Fallback PDF exported successfully:', pdfFilename);
+    console.log('PDF successfully generated & downloaded:', pdfFilename);
     return true;
-  } catch (err) {
-    console.error('Fallback PDF Export Error:', err);
+  } catch (error) {
+    console.error('PDF Generation Error:', error);
     return false;
+  } finally {
+    // Always clean up off-screen clone sandbox from DOM
+    if (cloneWrapper && cloneWrapper.parentNode) {
+      cloneWrapper.parentNode.removeChild(cloneWrapper);
+    }
   }
 }
 
@@ -702,7 +779,7 @@ export function exportToTXT(data: ResumeData) {
 }
 
 // 4. Export to JSON Schema
-export function exportToJSON(data: ResumeData, theme: any, templateId: string) {
+export function exportToJSON(data: ResumeData, theme: ThemeSettings, templateId: string) {
   const bundle = {
     id: data.id,
     title: data.title,

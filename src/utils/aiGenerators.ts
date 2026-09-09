@@ -1,5 +1,3 @@
-import { ResumeData } from '../types/resume';
-
 // Real API Integration Helpers
 export async function callOpenAI(prompt: string, apiKey: string, systemPrompt = 'You are an expert resume writer and career coach.'): Promise<string> {
   try {

@@ -15,56 +15,68 @@
 .font-poppins { font-family: 'Poppins', sans-serif; }
 
 /* Custom print media styles for vector-perfect, ATS-friendly outputs */
+/* Custom print media styles for vector-perfect, ATS-friendly outputs */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 12mm 12mm 12mm 12mm;
+  }
+  
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
   }
   
   html, body {
-    background: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    background: #ffffff !important;
+    color: #111827 !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    min-height: 100% !important;
     overflow: visible !important;
   }
   
-  /* Hide all non-resume UI: sidebar, navbar, editor, buttons */
+  /* Hide all non-resume UI: sidebar, navbar, editor, buttons, footers */
   .no-print,
   .no-print *,
   aside,
   nav,
   header,
   footer,
+  button,
+  input,
+  textarea,
+  select,
   #resume-scroll-wrapper > *:not(#resume-preview-container) {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* The right preview panel: reset to block layout */
+  /* The right preview panel: static block so document flows naturally across pages */
   #resume-right-panel {
     display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
+    position: static !important;
+    width: 100% !important;
     height: auto !important;
-    background: white !important;
+    background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
   }
 
-  /* Scrollable wrapper: no padding, no flex centering */
+  /* Scrollable wrapper: no overflow lock, full width */
   #resume-scroll-wrapper {
     display: block !important;
     width: 100% !important;
+    height: auto !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
   }
 
-  /* The preview card: remove border, shadow, rounding */
+  /* The preview card: remove browser borders, shadows, rounded corners */
   #resume-preview-container {
     display: block !important;
     width: 100% !important;
@@ -76,7 +88,7 @@
     border-radius: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-    background: white !important;
+    background: #ffffff !important;
     overflow: visible !important;
   }
 
@@ -91,6 +103,7 @@
     padding: 0 !important;
     overflow: visible !important;
     break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   /* Page break helpers */
@@ -99,12 +112,18 @@
     break-after: page;
   }
 
-  /* Avoid breaking sections across pages */
+  /* Keep section blocks and individual entries together where appropriate */
   .break-inside-avoid,
   .section-block,
   .entry-block {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Keep headings with their following content */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 
@@ -114,6 +133,11 @@
 .entry-block {
   page-break-inside: avoid;
   break-inside: avoid;
+}
+
+.pdf-page-spacer {
+  page-break-before: always;
+  break-before: page;
 }
 
 

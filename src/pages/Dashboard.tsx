@@ -15,8 +15,6 @@ export const Dashboard: React.FC = () => {
   const { 
     savedResumes, 
     resumeData, 
-    templateId,
-    themeSettings,
     createNewResume, 
     loadResume, 
     deleteResume,

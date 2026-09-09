@@ -154,7 +154,7 @@ const createNewResumeData = (id: string, title = 'Untitled Resume'): ResumeData 
 
 export const useResumeStore = create<ResumeState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // Active Resume Data
       resumeData: {
         id: 'default-resume-id',
