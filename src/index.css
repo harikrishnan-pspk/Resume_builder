@@ -18,8 +18,8 @@
 /* Custom print media styles for vector-perfect, ATS-friendly outputs */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 12mm 12mm 12mm 12mm;
+    size: A4;
+    margin: 15mm;
   }
   
   *, *::before, *::after {
@@ -28,14 +28,19 @@
     box-sizing: border-box !important;
   }
   
-  html, body {
+  html, body, #root, #root > div, main, main > div {
     background: #ffffff !important;
     color: #111827 !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    min-height: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    float: none !important;
   }
   
   /* Hide all non-resume UI: sidebar, navbar, editor, buttons, footers */
@@ -60,6 +65,8 @@
     position: static !important;
     width: 100% !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -69,8 +76,11 @@
   /* Scrollable wrapper: no overflow lock, full width */
   #resume-scroll-wrapper {
     display: block !important;
+    position: static !important;
     width: 100% !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
@@ -79,10 +89,12 @@
   /* The preview card: remove browser borders, shadows, rounded corners */
   #resume-preview-container {
     display: block !important;
+    position: static !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: unset !important;
+    min-height: 0 !important;
     height: auto !important;
+    max-height: none !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -94,8 +106,13 @@
 
   /* The actual resume document */
   #resume-document {
+    display: block !important;
+    position: static !important;
     width: 100% !important;
     max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;

@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../store/useResumeStore';
 import { analyzeResume, getKeywordSuggestionsForRole } from '../utils/atsScorer';
-import { exportToPDF, exportToDOCX, exportToTXT, exportToJSON, printResume } from '../utils/exporters';
+import { exportToDOCX, printResume } from '../utils/exporters';
 import { executeAITask } from '../utils/aiGenerators';
 import { TemplateRenderer, TEMPLATES_LIST } from '../templates/Templates';
-import confetti from 'canvas-confetti';
-import { 
-  User, FileText, GraduationCap, Cpu, Briefcase, Folder, Award, Languages, 
-  Heart, Users, Eye, Download, Sparkles, AlertCircle, Plus, 
-  Trash2, ArrowLeft, ArrowRight, Check, Palette, 
-  CheckCircle2, RefreshCw, Info
+import {
+  User, FileText, GraduationCap, Cpu, Briefcase, Folder, Award, Languages,
+  Heart, Users, Eye, Sparkles, AlertCircle, Plus,
+  Trash2, ArrowLeft, ArrowRight, Check, Palette,
+  CheckCircle2, RefreshCw, Info, Printer
 } from 'lucide-react';
 
 export const Builder: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Zustand Store hooks
   const {
     resumeData,
@@ -97,7 +96,7 @@ export const Builder: React.FC = () => {
 
   // HTML5 List Drag & Drop handlers
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  
+
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
@@ -152,36 +151,10 @@ export const Builder: React.FC = () => {
     }
   };
 
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingDOCX, setIsExportingDOCX] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
-  // Trigger downloads with complete safety guards
-  const handleDownloadPDF = async () => {
-    if (isExportingPDF) return;
-    setIsExportingPDF(true);
-    try {
-      const rawName = resumeData.personalInfo.fullName ? resumeData.personalInfo.fullName.trim() : '';
-      const filename = rawName ? `${rawName.replace(/\s+/g, '_')}_Resume` : 'Resume';
-      console.log('Initiating safe PDF download for:', filename);
-      
-      const success = await exportToPDF('resume-document', filename, themeSettings.pageSize);
-      
-      if (success) {
-        console.log('Resume PDF downloaded successfully.');
-        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-      } else {
-        console.error('PDF export failed');
-        alert('Failed to generate PDF. Please check that all sections are valid.');
-      }
-    } catch (error) {
-      console.error('PDF Download Error:', error);
-      alert('An error occurred while generating the PDF. Please try again.');
-    } finally {
-      setIsExportingPDF(false);
-    }
-  };
-
+  // Trigger Print dialog (primary PDF & hardcopy workflow)
   const handlePrint = () => {
     if (isPrinting) return;
     setIsPrinting(true);
@@ -195,6 +168,7 @@ export const Builder: React.FC = () => {
     }
   };
 
+  // Trigger Word export
   const handleDownloadDOCX = async () => {
     if (isExportingDOCX) return;
     setIsExportingDOCX(true);
@@ -213,20 +187,12 @@ export const Builder: React.FC = () => {
     }
   };
 
-  const handleDownloadTXT = () => {
-    exportToTXT(resumeData);
-  };
-
-  const handleExportJSON = () => {
-    exportToJSON(resumeData, themeSettings, templateId);
-  };
-
   // AI completion trigger
   const runAIHelper = async (action: string, customText = '') => {
     setAiLoading(true);
     setActiveAiTool(action);
     setAiResponse('');
-    
+
     try {
       const context = {
         title: resumeData.personalInfo.professionalTitle || 'Software Engineer',
@@ -234,16 +200,16 @@ export const Builder: React.FC = () => {
         currentText: customText || resumeData.summary || '',
         skills: resumeData.skills.map(s => s.name)
       };
-      
+
       // Add timeout for AI API calls
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
+
       const response = await executeAITask(action, context, { apiKey, provider: apiProvider });
       clearTimeout(timeoutId);
       setAiResponse(response);
     } catch (e: any) {
-      const errorMsg = e.name === 'AbortError' 
+      const errorMsg = e.name === 'AbortError'
         ? 'Request timed out. Please try again.'
         : e.message || 'Generation failed. Try verifying API credentials.';
       setAiResponse(`Error: ${errorMsg}`);
@@ -279,20 +245,20 @@ export const Builder: React.FC = () => {
 
   // Helper selectors
   const personal = resumeData.personalInfo;
-  
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-gray-50/50 dark:bg-gray-950/20 transition-colors duration-300">
-      
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-gray-50/50 dark:bg-gray-950/20 transition-colors duration-300 print:h-auto print:overflow-visible print:block">
+
       {/* 1. LEFT SIDEBAR: STEP NAVIGATION */}
       <aside className="hidden lg:flex w-64 border-r border-gray-200 bg-white p-4 flex-col justify-between shrink-0 no-print dark:border-gray-800 dark:bg-gray-900 transition-colors">
         <div className="space-y-4">
-          <button 
+          <button
             onClick={() => navigate('/dashboard')}
             className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Exit to Dashboard
           </button>
-          
+
           <div className="space-y-1">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Form Checklist</h3>
             <nav className="space-y-1 max-h-[calc(100vh-14rem)] overflow-y-auto pr-1">
@@ -300,11 +266,10 @@ export const Builder: React.FC = () => {
                 <button
                   key={step.id}
                   onClick={() => setActiveStep(step.id)}
-                  className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl font-semibold text-xs transition-smooth ${
-                    activeStep === step.id 
-                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-850 dark:hover:text-white'
-                  }`}
+                  className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl font-semibold text-xs transition-smooth ${activeStep === step.id
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-850 dark:hover:text-white'
+                    }`}
                 >
                   {step.icon}
                   <span>{step.name}</span>
@@ -326,7 +291,7 @@ export const Builder: React.FC = () => {
 
       {/* 2. MIDDLE PANEL: MULTI-STEP FORMS & TOOLS */}
       <div className="flex-1 flex flex-col min-w-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden no-print">
-        
+
         {/* Workspace Subtabs */}
         <div className="flex border-b border-gray-150 dark:border-gray-800 px-4 py-2 justify-between items-center bg-gray-50 dark:bg-gray-900/50 no-print">
           <div className="flex gap-2">
@@ -355,7 +320,7 @@ export const Builder: React.FC = () => {
               <Sparkles className="inline h-3.5 w-3.5 mr-1" /> AI Assistant
             </button>
           </div>
-          
+
           {/* Step selector on mobile */}
           <div className="flex lg:hidden items-center gap-1.5 text-xs text-gray-500 font-bold">
             <span>Step {activeStep + 1}/12</span>
@@ -364,11 +329,11 @@ export const Builder: React.FC = () => {
 
         {/* Tab Contents */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
+
           {/* EDITOR FORM TAB */}
           {activeTab === 'editor' && (
             <div className="space-y-6">
-              
+
               {/* STEP 1: PERSONAL INFORMATION */}
               {activeStep === 0 && (
                 <div className="space-y-5">
@@ -376,7 +341,7 @@ export const Builder: React.FC = () => {
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">Personal Info</h2>
                     <p className="text-xs text-gray-400">Tell recruiters who you are and how to reach you.</p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center border-b pb-6 dark:border-gray-800">
                     <div className="col-span-1 flex flex-col items-center">
                       <div className="h-24 w-24 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-900 shadow-inner relative">
@@ -386,21 +351,21 @@ export const Builder: React.FC = () => {
                           <User className="h-8 w-8 text-gray-300" />
                         )}
                       </div>
-                      <input 
-                        type="file" 
-                        id="avatar-loader" 
-                        onChange={handlePhotoUpload} 
-                        accept="image/*" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        id="avatar-loader"
+                        onChange={handlePhotoUpload}
+                        accept="image/*"
+                        className="hidden"
                       />
-                      <label 
+                      <label
                         htmlFor="avatar-loader"
                         className="mt-3 cursor-pointer text-[10px] font-bold text-indigo-600 hover:underline"
                       >
                         Upload Photo (Optional)
                       </label>
                       {photoBase64 && (
-                        <button 
+                        <button
                           onClick={() => { setPhotoBase64(''); updatePersonalInfo({ photo: '' }); }}
                           className="text-[9px] text-red-500 font-bold hover:underline mt-1"
                         >
@@ -534,11 +499,11 @@ export const Builder: React.FC = () => {
                       <p className="text-[10px] text-gray-500 leading-relaxed">
                         Copy the default recruiter-friendly prompt to optimize your summaries in ChatGPT / Claude, or generate instantly using our client-side AI helper button!
                       </p>
-                      
+
                       <div className="bg-white p-3 rounded-lg border text-[10px] text-gray-400 dark:bg-gray-850 dark:border-gray-800 leading-relaxed font-mono">
                         "Create a professional ATS-friendly resume summary for a {personal.professionalTitle || 'Software Engineering'} student. Highlight technical skills, strengths, internships, certifications, leadership qualities, teamwork, communication, and career objectives. Keep it concise (80–120 words), impactful, and recruiter-friendly."
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <button
                           onClick={() => {
@@ -659,7 +624,7 @@ export const Builder: React.FC = () => {
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <label className="block text-[10px] font-bold uppercase tracking-wide text-gray-400 mb-1">Coursework / Description</label>
                           <textarea
@@ -708,7 +673,7 @@ export const Builder: React.FC = () => {
                         }}
                       />
                     </div>
-                    
+
                     <div className="w-full sm:w-fit flex gap-3 justify-between">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wide text-gray-400 mb-1">Category</label>
@@ -720,7 +685,7 @@ export const Builder: React.FC = () => {
                           <option value="soft">Soft Skill</option>
                         </select>
                       </div>
-                      
+
                       <button
                         onClick={() => {
                           const input = document.getElementById('new-skill-name') as HTMLInputElement;
@@ -755,7 +720,7 @@ export const Builder: React.FC = () => {
                             <span className="text-xs font-bold text-gray-900 dark:text-white">{skill.name}</span>
                             <span className="block text-[8px] uppercase tracking-wider font-semibold text-gray-400">{skill.type}</span>
                           </div>
-                          
+
                           <div className="flex items-center gap-3">
                             <div className="flex gap-0.5 text-xs text-amber-400">
                               {Array.from({ length: 5 }).map((_, i) => (
@@ -782,7 +747,7 @@ export const Builder: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Suggestions block based on role */}
                   <div className="rounded-xl border border-gray-150 p-4 bg-gray-50/30 dark:border-gray-850 dark:bg-gray-900/30 space-y-3">
                     <h4 className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1">
@@ -1072,7 +1037,7 @@ export const Builder: React.FC = () => {
                             <span className="text-[10px] font-bold text-gray-400">Certification Details</span>
                             <button onClick={() => removeCertification(cert.id)} className="text-red-500"><Trash2 className="h-4.5 w-4.5" /></button>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input
                               type="text"
@@ -1362,11 +1327,10 @@ export const Builder: React.FC = () => {
                     <button
                       key={tpl.id}
                       onClick={() => setTemplateId(tpl.id)}
-                      className={`p-2.5 text-left border rounded-xl text-[10px] font-semibold transition-smooth ${
-                        templateId === tpl.id 
-                          ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-900/20 dark:text-indigo-400' 
-                          : 'border-gray-200 text-gray-500 dark:border-gray-800 dark:text-gray-400'
-                      }`}
+                      className={`p-2.5 text-left border rounded-xl text-[10px] font-semibold transition-smooth ${templateId === tpl.id
+                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-900/20 dark:text-indigo-400'
+                        : 'border-gray-200 text-gray-500 dark:border-gray-800 dark:text-gray-400'
+                        }`}
                     >
                       {tpl.name}
                     </button>
@@ -1537,15 +1501,14 @@ export const Builder: React.FC = () => {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Parser Optimizations Checklist</h3>
                 <div className="space-y-2">
                   {atsAnalysis.suggestions.map((s) => (
-                    <div 
+                    <div
                       key={s.id}
-                      className={`p-3 border rounded-xl flex gap-3 text-xs ${
-                        s.type === 'warning' 
-                          ? 'bg-amber-50/50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-300' 
-                          : s.type === 'success'
+                      className={`p-3 border rounded-xl flex gap-3 text-xs ${s.type === 'warning'
+                        ? 'bg-amber-50/50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900/30 dark:text-amber-300'
+                        : s.type === 'success'
                           ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/20 dark:border-emerald-900/30 dark:text-emerald-300'
                           : 'bg-blue-50/50 border-blue-200 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-300'
-                      }`}
+                        }`}
                     >
                       {s.type === 'warning' ? <AlertCircle className="h-4.5 w-4.5 shrink-0" /> : <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />}
                       <span><strong>[{s.category}]</strong> {s.message}</span>
@@ -1602,7 +1565,7 @@ export const Builder: React.FC = () => {
                 <div className="p-5 border rounded-2xl bg-indigo-50/10 border-indigo-100 dark:border-indigo-900/30 space-y-4">
                   <div className="flex justify-between items-center border-b pb-2 dark:border-gray-800">
                     <span className="text-[10px] font-bold text-indigo-600 uppercase">AI Copilot Response</span>
-                    <button 
+                    <button
                       onClick={() => {
                         navigator.clipboard.writeText(aiResponse);
                         alert('Copied AI text!');
@@ -1615,7 +1578,7 @@ export const Builder: React.FC = () => {
                   <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed font-sans max-h-80 overflow-y-auto">
                     {aiResponse}
                   </pre>
-                  
+
                   {(activeAiTool === 'generate-summary' || activeAiTool === 'improve-summary') && (
                     <button
                       onClick={() => handleApplyAISuggestion(activeAiTool)}
@@ -1635,70 +1598,47 @@ export const Builder: React.FC = () => {
       </div>
 
       {/* 3. RIGHT PANEL: REAL-TIME LIVE PREVIEW */}
-      <section id="resume-right-panel" className={`flex-1 flex flex-col bg-gray-200/50 dark:bg-gray-900/30 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 bg-gray-100 dark:bg-gray-950 p-6' : 'hidden md:flex'}`}>
-        
+      <section id="resume-right-panel" className={`flex-1 flex flex-col bg-gray-200/50 dark:bg-gray-900/30 overflow-hidden print:h-auto print:overflow-visible print:block ${isFullscreen ? 'fixed inset-0 z-50 bg-gray-100 dark:bg-gray-950 p-6' : 'hidden md:flex'}`}>
+
         {/* Preview controls menu */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center no-print bg-white dark:bg-gray-900">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
             <button
-              disabled={isExportingPDF}
-              onClick={handleDownloadPDF}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 transition-smooth disabled:opacity-60"
+              disabled={isPrinting}
+              onClick={handlePrint}
+              className="inline-flex h-9 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:from-blue-700 hover:to-indigo-700 transition-smooth disabled:opacity-60 cursor-pointer"
             >
-              {isExportingPDF ? (
+              {isPrinting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Generating...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Opening Print...
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4" /> PDF
+                  <Printer className="h-4 w-4" /> Print
                 </>
               )}
             </button>
             <button
               disabled={isExportingDOCX}
               onClick={handleDownloadDOCX}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 px-4 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth disabled:opacity-60 cursor-pointer"
             >
               {isExportingDOCX ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> DOCX...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Exporting Word...
                 </>
               ) : (
-                'Word DOC'
-              )}
-            </button>
-            <button
-              disabled={isPrinting}
-              onClick={handlePrint}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth disabled:opacity-60"
-            >
-              {isPrinting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Preparing...
+                  <FileText className="h-4 w-4" /> Word
                 </>
-              ) : (
-                'Print Vector'
               )}
-            </button>
-            <button
-              onClick={handleDownloadTXT}
-              className="hidden lg:inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth"
-            >
-              TXT
-            </button>
-            <button
-              onClick={handleExportJSON}
-              className="hidden lg:inline-flex h-9 items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-smooth"
-            >
-              JSON
             </button>
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-850"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-850 cursor-pointer"
               title="Toggle Fullscreen"
             >
               <Eye className="h-4.5 w-4.5" />
@@ -1707,15 +1647,15 @@ export const Builder: React.FC = () => {
         </div>
 
         {/* Scrollable Document Container */}
-        <div id="resume-scroll-wrapper" className="flex-1 overflow-y-auto p-8 flex justify-center items-start">
-          <div 
-            id="resume-preview-container" 
-            className="w-full max-w-[210mm] min-h-[297mm] bg-white border border-gray-200 shadow-xl rounded-xl overflow-hidden transition-colors"
+        <div id="resume-scroll-wrapper" className="flex-1 overflow-y-auto p-8 flex justify-center items-start print:h-auto print:overflow-visible print:p-0 print:block">
+          <div
+            id="resume-preview-container"
+            className="w-full max-w-[210mm] min-h-[297mm] bg-white border border-gray-200 shadow-xl rounded-xl overflow-visible transition-colors print:max-w-none print:min-h-0 print:h-auto print:border-none print:shadow-none print:rounded-none print:p-0 print:block"
           >
-            <TemplateRenderer 
-              templateId={templateId} 
-              data={resumeData} 
-              theme={themeSettings} 
+            <TemplateRenderer
+              templateId={templateId}
+              data={resumeData}
+              theme={themeSettings}
             />
           </div>
         </div>

@@ -2,21 +2,21 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeStore } from '../store/useResumeStore';
 import { analyzeResume } from '../utils/atsScorer';
-import { 
-  FileText, Plus, Upload, Trash2, Edit3, Copy, Calendar, Award, 
-  BarChart2, Type, Clock, CheckCircle2, ChevronRight, AlertTriangle 
+import {
+  FileText, Plus, Upload, Trash2, Edit3, Copy, Calendar, Award,
+  BarChart2, Type, Clock, CheckCircle2, ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const { 
-    savedResumes, 
-    resumeData, 
-    createNewResume, 
-    loadResume, 
+
+  const {
+    savedResumes,
+    resumeData,
+    createNewResume,
+    loadResume,
     deleteResume,
     saveCurrentResume,
     importResumeJSON
@@ -75,8 +75,8 @@ export const Dashboard: React.FC = () => {
 
   // Analyze active resume for dashboard statistics
   const atsAnalysis = analyzeResume(resumeData);
-  const wordCount = resumeData.summary.split(/\s+/).filter(Boolean).length + 
-                    resumeData.experience.reduce((acc, job) => acc + job.responsibilities.split(/\s+/).filter(Boolean).length, 0);
+  const wordCount = resumeData.summary.split(/\s+/).filter(Boolean).length +
+    resumeData.experience.reduce((acc, job) => acc + job.responsibilities.split(/\s+/).filter(Boolean).length, 0);
   const readingTime = Math.max(1, Math.round(wordCount / 200)); // Average 200 WPM
 
   // Calculate completion percentage based on core sections
@@ -94,7 +94,7 @@ export const Dashboard: React.FC = () => {
     check(resumeData.personalInfo.email);
     check(resumeData.personalInfo.phone);
     check(resumeData.summary);
-    
+
     fields++; if (resumeData.skills.length > 0) filled++;
     fields++; if (resumeData.experience.length > 0) filled++;
     fields++; if (resumeData.education.length > 0) filled++;
@@ -108,7 +108,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-900/40 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="mx-auto max-w-7xl space-y-8">
-        
+
         {/* Header Title Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -120,12 +120,12 @@ export const Dashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept=".json" 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".json"
+              className="hidden"
             />
             <button
               onClick={handleImportClick}
@@ -199,9 +199,9 @@ export const Dashboard: React.FC = () => {
               <span className="text-3xl font-extrabold text-gray-900 dark:text-white">{completionPercent}%</span>
             </div>
             <div className="mt-3 w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
-              <div 
-                className="bg-emerald-600 dark:bg-emerald-400 h-full rounded-full transition-all duration-500" 
-                style={{ width: `${completionPercent}%` }} 
+              <div
+                className="bg-emerald-600 dark:bg-emerald-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${completionPercent}%` }}
               />
             </div>
           </div>

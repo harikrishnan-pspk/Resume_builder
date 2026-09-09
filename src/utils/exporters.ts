@@ -444,17 +444,39 @@ export async function exportToDOCX(data: ResumeData): Promise<boolean> {
     if (data.projects && data.projects.length > 0) {
       addSectionHeading('Projects');
       data.projects.forEach((proj) => {
+        const nameLine: import('docx').IRunOptions[] = [
+          { text: proj.name || '', bold: true, size: 22 }
+        ];
         children.push(
           new Paragraph({
             spacing: { before: 120, after: 40 },
-            children: [
-              new TextRun({ text: proj.name || '', bold: true, size: 22 }),
-              ...(proj.githubLink
-                ? [new TextRun({ text: ` (${proj.githubLink})`, size: 18, color: '2563EB' })]
-                : [])
-            ]
+            children: nameLine.map((r) => new TextRun(r))
           })
         );
+        // Live Demo link
+        if (proj.liveLink) {
+          children.push(
+            new Paragraph({
+              spacing: { after: 20 },
+              children: [
+                new TextRun({ text: 'Live Demo: ', bold: true, size: 19, color: '2563EB' }),
+                new TextRun({ text: proj.liveLink.replace(/^https?:\/\//, ''), size: 19, color: '2563EB' })
+              ]
+            })
+          );
+        }
+        // GitHub link
+        if (proj.githubLink) {
+          children.push(
+            new Paragraph({
+              spacing: { after: 20 },
+              children: [
+                new TextRun({ text: 'GitHub: ', bold: true, size: 19, color: '374151' }),
+                new TextRun({ text: proj.githubLink.replace(/^https?:\/\//, ''), size: 19, color: '374151' })
+              ]
+            })
+          );
+        }
         children.push(
           new Paragraph({
             spacing: { after: 40 },

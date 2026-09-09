@@ -8,67 +8,67 @@ interface ResumeState {
   resumeData: ResumeData;
   themeSettings: ThemeSettings;
   templateId: string;
-  
+
   // Dashboard & Navigation State
   savedResumes: SavedResume[];
   activeStep: number;
   isDarkMode: boolean;
   apiKey: string;
   apiProvider: 'openai' | 'gemini';
-  
+
   // Actions
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void;
   updateSummary: (summary: string) => void;
-  
+
   addEducation: (edu: Omit<Education, 'id'>) => void;
   updateEducation: (id: string, edu: Partial<Education>) => void;
   removeEducation: (id: string) => void;
   reorderEducation: (list: Education[]) => void;
-  
+
   addSkill: (skill: Omit<Skill, 'id'>) => void;
   updateSkill: (id: string, skill: Partial<Skill>) => void;
   removeSkill: (id: string) => void;
   reorderSkills: (list: Skill[]) => void;
-  
+
   addExperience: (exp: Omit<Experience, 'id'>) => void;
   updateExperience: (id: string, exp: Partial<Experience>) => void;
   removeExperience: (id: string) => void;
   reorderExperience: (list: Experience[]) => void;
-  
+
   addProject: (proj: Omit<Project, 'id'>) => void;
   updateProject: (id: string, proj: Partial<Project>) => void;
   removeProject: (id: string) => void;
   reorderProjects: (list: Project[]) => void;
-  
+
   addCertification: (cert: Omit<Certification, 'id'>) => void;
   updateCertification: (id: string, cert: Partial<Certification>) => void;
   removeCertification: (id: string) => void;
-  
+
   addInternship: (intern: Omit<Internship, 'id'>) => void;
   updateInternship: (id: string, intern: Partial<Internship>) => void;
   removeInternship: (id: string) => void;
-  
+
   addAchievement: (achievement: string) => void;
   updateAchievement: (index: number, achievement: string) => void;
   removeAchievement: (index: number) => void;
-  
+
   addLanguage: (lang: Omit<Language, 'id'>) => void;
   updateLanguage: (id: string, lang: Partial<Language>) => void;
   removeLanguage: (id: string) => void;
-  
+
   addInterest: (interest: string) => void;
   removeInterest: (index: number) => void;
-  
+
   addReference: (ref: Omit<Reference, 'id'>) => void;
   updateReference: (id: string, ref: Partial<Reference>) => void;
   removeReference: (id: string) => void;
-  
+
   updateThemeSettings: (settings: Partial<ThemeSettings>) => void;
   setTemplateId: (id: string) => void;
   setActiveStep: (step: number) => void;
   toggleDarkMode: () => void;
   setApiKey: (key: string, provider: 'openai' | 'gemini') => void;
-  
+
   // Saved Resumes Management
   saveCurrentResume: () => void;
   loadResume: (id: string) => void;
@@ -175,14 +175,14 @@ export const useResumeStore = create<ResumeState>()(
       },
       themeSettings: defaultThemeSettings,
       templateId: 'modern-minimal',
-      
+
       // Dashboard & Settings
       savedResumes: [],
       activeStep: 0,
       isDarkMode: false,
       apiKey: '',
       apiProvider: 'openai',
-      
+
       // Personal Info
       updatePersonalInfo: (info) => set((state) => ({
         resumeData: {
@@ -191,7 +191,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Summary
       updateSummary: (summary) => set((state) => ({
         resumeData: {
@@ -200,7 +200,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Education
       addEducation: (edu) => set((state) => ({
         resumeData: {
@@ -230,7 +230,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Skills
       addSkill: (skill) => set((state) => ({
         resumeData: {
@@ -260,7 +260,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Experience
       addExperience: (exp) => set((state) => ({
         resumeData: {
@@ -290,7 +290,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Projects
       addProject: (proj) => set((state) => ({
         resumeData: {
@@ -320,7 +320,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Certifications
       addCertification: (cert) => set((state) => ({
         resumeData: {
@@ -343,7 +343,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Internships
       addInternship: (intern) => set((state) => ({
         resumeData: {
@@ -366,7 +366,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Achievements
       addAchievement: (achievement) => set((state) => ({
         resumeData: {
@@ -389,7 +389,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Languages
       addLanguage: (lang) => set((state) => ({
         resumeData: {
@@ -412,7 +412,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Interests
       addInterest: (interest) => set((state) => ({
         resumeData: {
@@ -428,7 +428,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // References
       addReference: (ref) => set((state) => ({
         resumeData: {
@@ -451,7 +451,7 @@ export const useResumeStore = create<ResumeState>()(
           lastSaved: new Date().toISOString()
         }
       })),
-      
+
       // Themes, steps, keys, modes
       updateThemeSettings: (settings) => set((state) => ({
         themeSettings: { ...state.themeSettings, ...settings }
@@ -460,7 +460,7 @@ export const useResumeStore = create<ResumeState>()(
       setActiveStep: (step) => set({ activeStep: step }),
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       setApiKey: (key, provider) => set({ apiKey: key, apiProvider: provider }),
-      
+
       // Saved Resumes Management
       saveCurrentResume: () => set((state) => {
         const existingIdx = state.savedResumes.findIndex((r) => r.id === state.resumeData.id);
@@ -473,17 +473,17 @@ export const useResumeStore = create<ResumeState>()(
           templateId: state.templateId,
           atsScore: analyzeResume(state.resumeData).score
         };
-        
+
         let newList = [...state.savedResumes];
         if (existingIdx >= 0) {
           newList[existingIdx] = updatedResume;
         } else {
           newList.unshift(updatedResume);
         }
-        
+
         return { savedResumes: newList };
       }),
-      
+
       loadResume: (id) => set((state) => {
         const found = state.savedResumes.find((r) => r.id === id);
         if (found) {
@@ -509,15 +509,15 @@ export const useResumeStore = create<ResumeState>()(
         }
         return {};
       }),
-      
+
       deleteResume: (id) => set((state) => ({
         savedResumes: state.savedResumes.filter((r) => r.id !== id)
       })),
-      
+
       createNewResume: () => set((state) => {
         const newId = `resume-${Date.now()}`;
         const newResume = createNewResumeData(newId);
-        
+
         // Save the previous one first
         const currentSavedList = [...state.savedResumes];
         const existingIdx = currentSavedList.findIndex((r) => r.id === state.resumeData.id);
@@ -529,13 +529,13 @@ export const useResumeStore = create<ResumeState>()(
           theme: state.themeSettings,
           templateId: state.templateId
         };
-        
+
         if (existingIdx >= 0) {
           currentSavedList[existingIdx] = activeSaved;
         } else {
           currentSavedList.unshift(activeSaved);
         }
-        
+
         return {
           resumeData: newResume,
           themeSettings: defaultThemeSettings,
@@ -544,7 +544,7 @@ export const useResumeStore = create<ResumeState>()(
           activeStep: 0
         };
       }),
-      
+
       importResumeJSON: (jsonString) => {
         try {
           const parsed = JSON.parse(jsonString);
@@ -567,7 +567,7 @@ export const useResumeStore = create<ResumeState>()(
               interests: dataObj.interests || [],
               references: dataObj.references || []
             };
-            
+
             set({
               resumeData: importedResume,
               themeSettings: parsed.themeSettings || parsed.theme || defaultThemeSettings,
