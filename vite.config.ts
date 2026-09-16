@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Resume_builder/',
+  base: process.env.GITHUB_ACTIONS === 'true' ? '/Resume_builder/' : '/',
   plugins: [react(), tailwindcss()],
 })
