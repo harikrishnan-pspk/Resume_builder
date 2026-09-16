@@ -32,8 +32,10 @@ function App() {
     }
   }, [isDarkMode]);
 
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '');
+
   return (
-    <Router>
+    <Router basename={basename}>
       <ScrollToTop />
       <div className="flex flex-col min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
         <Navbar />
