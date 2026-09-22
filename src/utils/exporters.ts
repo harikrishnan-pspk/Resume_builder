@@ -84,8 +84,11 @@ export async function exportToPDF(elementId: string, filename: string, pageSize:
     const totalHeight = clone.scrollHeight || clone.offsetHeight;
 
     if (totalHeight > pagePxHeight) {
-      // Find boundary blocks (.section-block, .entry-block, h1, h2, h3) to prevent splitting text
-      const blocks = Array.from(clone.querySelectorAll('.section-block, .entry-block, h1, h2, h3, li, tr')) as HTMLElement[];
+      // Small atomic elements only (never whole sections or large entry blocks)
+      // Only adjust if the push-down distance is small (<= 40px) to prevent large blank gaps
+      const MAX_PUSH_DOWN_PX = 40;
+      const MAX_BLOCK_HEIGHT_PX = 90;
+      const blocks = Array.from(clone.querySelectorAll('h1, h2, h3, h4, h5, h6, li, tr, .break-inside-avoid')) as HTMLElement[];
       const cloneRect = clone.getBoundingClientRect();
 
       let accumulatedOffset = 0;
@@ -93,21 +96,28 @@ export async function exportToPDF(elementId: string, filename: string, pageSize:
 
       for (const block of blocks) {
         const blockRect = block.getBoundingClientRect();
+        if (blockRect.height === 0 || blockRect.height > MAX_BLOCK_HEIGHT_PX) continue;
+
         const blockTopRelativeToClone = (blockRect.top - cloneRect.top) + accumulatedOffset;
         const blockBottomRelativeToClone = blockTopRelativeToClone + blockRect.height;
-        const targetPageBoundary = currentPage * pagePxHeight;
+        let targetPageBoundary = currentPage * pagePxHeight;
 
-        // If the block crosses the page boundary and doesn't single-handedly exceed a whole page
-        if (blockTopRelativeToClone < targetPageBoundary && blockBottomRelativeToClone > targetPageBoundary && blockRect.height < (pagePxHeight * 0.8)) {
+        while (blockTopRelativeToClone >= targetPageBoundary) {
+          currentPage++;
+          targetPageBoundary = currentPage * pagePxHeight;
+        }
+
+        // If the block crosses the boundary and only requires a small adjustment
+        if (blockTopRelativeToClone < targetPageBoundary && blockBottomRelativeToClone > targetPageBoundary) {
           const pushDownAmount = targetPageBoundary - blockTopRelativeToClone;
-          if (pushDownAmount > 0 && pushDownAmount < pagePxHeight) {
+          if (pushDownAmount > 0 && pushDownAmount <= MAX_PUSH_DOWN_PX) {
             const spacer = document.createElement('div');
-            spacer.style.height = `${pushDownAmount + 16}px`;
+            spacer.style.height = `${pushDownAmount + 4}px`;
             spacer.style.width = '100%';
             spacer.style.display = 'block';
             spacer.className = 'pdf-page-spacer';
             block.parentNode?.insertBefore(spacer, block);
-            accumulatedOffset += pushDownAmount + 16;
+            accumulatedOffset += pushDownAmount + 4;
             currentPage++;
           }
         }

@@ -19,7 +19,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 12mm;
   }
   
   *, *::before, *::after {
@@ -129,25 +129,48 @@
     break-after: page;
   }
 
-  /* Keep section blocks and individual entries together where appropriate */
-  .break-inside-avoid,
+  /* Sections and entry blocks must naturally flow across page boundaries */
   .section-block,
   .entry-block {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Only explicitly designated elements avoid page breaks */
+  .break-inside-avoid {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Keep headings with their following content */
+  /* Keep individual list items intact so a single bullet isn't sliced horizontally, but allow lists to break between items */
+  li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Keep headings with their following content when reasonably possible without moving entire sections */
   h1, h2, h3, h4, h5, h6 {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
+  }
+
+  /* Ensure text blocks don't leave single orphan or widow lines */
+  p, li {
+    orphans: 2;
+    widows: 2;
   }
 }
 
 /* Page break rules for PDF generation & document pagination */
-.break-inside-avoid,
 .section-block,
 .entry-block {
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.break-inside-avoid {
   page-break-inside: avoid;
   break-inside: avoid;
 }
